@@ -12,9 +12,9 @@ set -e  # Para o script em caso de erro
 # Configurações padrão
 DEFAULT_REGION="us-east-1"
 DEFAULT_ECR_REPO="bia"
-DEFAULT_CLUSTER="cluster-bia"
-DEFAULT_SERVICE="service-bia"
-DEFAULT_TASK_FAMILY="task-def-bia"
+DEFAULT_CLUSTER="cluster-bia-alb"
+DEFAULT_SERVICE="service-bia-alb"
+DEFAULT_TASK_FAMILY="task-def-bia-alb"
 
 # Cores para output
 RED='\033[0;31m'
@@ -153,13 +153,13 @@ create_task_definition() {
     local ecr_uri=$3
     local tag=$4
     
-    log_info "Criando nova task definition..."
+    log_info "Criando nova task definition..." >&2
     
     # Obter a task definition atual
     local current_task_def=$(aws ecs describe-task-definition --task-definition $task_family --region $region --query 'taskDefinition' --output json)
     
     if [ $? -ne 0 ]; then
-        log_error "Não foi possível obter a task definition atual: $task_family"
+        log_error "Não foi possível obter a task definition atual: $task_family" >&2
         exit 1
     fi
     
@@ -183,12 +183,12 @@ create_task_definition() {
     # Limpar arquivos temporários
     rm -f "$temp_file" "$new_temp_file"
     
-    if [ $? -ne 0 ]; then
-        log_error "Falha ao registrar nova task definition"
+    if [ -z "$new_revision" ]; then
+        log_error "Falha ao registrar nova task definition" >&2
         exit 1
     fi
     
-    log_success "Nova task definition criada: $task_family:$new_revision"
+    log_success "Nova task definition criada: $task_family:$new_revision" >&2
     echo $new_revision
 }
 
